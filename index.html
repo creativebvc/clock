@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BVC Digital Clock - BVCTV</title>
+    <title>BVC Alarm UI - Universal Fix</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
 
@@ -46,25 +46,22 @@
 
         .container {
             display: flex; flex-direction: column; align-items: center;
-            /* gap: 40px removed */
             width: 1000px;
         }
 
         .header-text {
-            margin-bottom: 15px; text-align: center; width: 100%;
-            /* Added margin to replace container gap */
-            margin-bottom: 40px; 
+            margin-bottom: 60px; text-align: center; width: 100%;
         }
 
         .header-text span { display: block; }
         
         #greeting-text {
-            color: #ffffff; font-size: 3.8rem; font-weight: 700; 
+            color: #ffffff; font-size: 3.2rem; font-weight: 700; 
             text-shadow: 0 6px 30px rgba(0,0,0,0.2); margin-bottom: 10px;
         }
 
         #date-text {
-            color: #99daff; font-size: 2.8rem; font-weight: 600; margin-bottom: 50px; 
+            color: #99daff; font-size: 2.2rem; font-weight: 600; margin-bottom: 25px; 
         }
 
         /* Glass Clock Face */
@@ -77,8 +74,6 @@
             box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 30px 60px rgba(0, 0, 0, 0.15), 0 0 25px rgba(255, 255, 255, 0.15);
             
             display: flex; justify-content: center; align-items: center;
-            
-            /* FIX 1: Removed gap: 48px (Not supported on TV) */
             position: relative;
         }
 
@@ -86,8 +81,6 @@
         .digit {
             width: 140px; height: 240px;
             position: relative; display: flex; align-items: center; 
-            
-            /* FIX 2: Added margin to replace gap */
             margin-right: 48px;
         }
 
@@ -97,8 +90,6 @@
         .segment {
             position: absolute; background: var(--segment-off);
             transition: all 0.2s ease;
-            
-            /* TV FIX: Forces hardware acceleration to prevent flickering */
             transform: translateZ(0); 
             will-change: background, box-shadow;
         }
@@ -108,13 +99,17 @@
             box-shadow: var(--segment-on-shadow); z-index: 2; 
         }
 
-        /* --- GEOMETRY --- */
+        /* --- GEOMETRY (With Vendor Prefixes) --- */
         .h-seg {
             height: var(--seg-th); width: 96px; left: 22px;  
+            /* LG WebOS 3/4 & Tizen 3/4 Support */
+            -webkit-clip-path: polygon(var(--cut-size) 0, calc(100% - var(--cut-size)) 0, 100% 50%, calc(100% - var(--cut-size)) 100%, var(--cut-size) 100%, 0 50%);
             clip-path: polygon(var(--cut-size) 0, calc(100% - var(--cut-size)) 0, 100% 50%, calc(100% - var(--cut-size)) 100%, var(--cut-size) 100%, 0 50%);
         }
         .v-seg {
             width: var(--seg-th); height: 96px; 
+            /* LG WebOS 3/4 & Tizen 3/4 Support */
+            -webkit-clip-path: polygon(50% 0, 100% var(--cut-size), 100% calc(100% - var(--cut-size)), 50% 100%, 0 calc(100% - var(--cut-size)), 0 var(--cut-size));
             clip-path: polygon(50% 0, 100% var(--cut-size), 100% calc(100% - var(--cut-size)), 50% 100%, 0 calc(100% - var(--cut-size)), 0 var(--cut-size));
         }
 
@@ -129,11 +124,7 @@
         /* Colon Separator */
         .separator {
             display: flex; flex-direction: column;
-            
-            /* FIX 3: Removed gap: 45px inside separator */
-            /* FIX 4: Added margin-right to separate it from the next digit */
             margin-right: 48px;
-            
             padding-top: 15px;
         }
         
@@ -143,12 +134,9 @@
             border-radius: 50%; 
             box-shadow: var(--segment-on-shadow);
             animation: pulse 1s infinite;
-            
-            /* FIX 5: Added margin-bottom to replace internal gap */
             margin-bottom: 45px;
         }
         
-        /* Remove margin from bottom dot */
         .dot:last-child { margin-bottom: 0; }
 
         @keyframes pulse {
@@ -159,7 +147,7 @@
         /* Logo Section */
         .logo-container {
             width: 100%; display: flex; justify-content: center; align-items: center;
-            margin-top: 120px;
+            margin-top: 90px;
         }
 
         .logo-container img {
@@ -230,15 +218,17 @@
 
     <script>
         // ========================================
-        // Background Gradients by Time
+        // MODERN SCRIPT (ES6) with LEGACY FALLBACKS
+        // Compatible with LG WebOS 3.0+ (Chromium 53)
         // ========================================
+
         const BACKGROUND_GRADIENTS = {
-            dawn: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)',      
-            day: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)',       
-            night: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)'      
+            dawn: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)',
+            day: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)',
+            night: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)'
         };
 
-        function setTimeBasedBackground(hour) {
+        const setTimeBasedBackground = (hour) => {
             let gradient;
             if (hour >= 7 && hour < 8) {
                 gradient = BACKGROUND_GRADIENTS.dawn;
@@ -247,10 +237,9 @@
             } else {
                 gradient = BACKGROUND_GRADIENTS.night;
             }
-            
             document.body.style.background = gradient;
             document.body.style.backgroundSize = '100% 100%';
-        }
+        };
 
         const digitMap = {
             '0': [1, 1, 1, 0, 1, 1, 1],
@@ -266,12 +255,13 @@
             'off': [0, 0, 0, 0, 0, 0, 0]
         };
 
-        function setDigit(digitId, value) {
+        const setDigit = (digitId, value) => {
             const digitEl = document.getElementById(digitId);
             const segments = digitEl.querySelectorAll('.segment');
             
-            // Fallback to 'off' if value is invalid/undefined
-            const map = digitMap[value] || digitMap['off'];
+            // Safe string conversion
+            const key = String(value);
+            const map = digitMap[key] || digitMap['off'];
 
             segments.forEach((seg, index) => {
                 if (map[index] === 1) {
@@ -280,59 +270,66 @@
                     seg.classList.remove('on');
                 }
             });
-        }
+        };
 
-        function updateClock() {
-            // Get raw time values directly (More reliable than string parsing)
+        // Helper function to replace padStart (Chromium 53 compatible)
+        const padZero = (num) => {
+            return num < 10 ? '0' + num : String(num);
+        };
+
+        const updateClock = () => {
             const now = new Date();
             
-            // Shift to Calgary Timezone if client is elsewhere, 
-            // otherwise local time is usually fine. 
-            // This method creates a "Calgary Date" object to pull hours/min from.
-            const calgaryTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Edmonton"}));
+            // Create a Calgary-specific date object
+            // This method is supported in Chromium 53
+            const calgaryString = now.toLocaleString("en-US", {timeZone: "America/Edmonton"});
+            const calgaryTime = new Date(calgaryString);
 
             const h = calgaryTime.getHours();
             const m = calgaryTime.getMinutes();
 
-            // --- Update Background ---
+            // --- Background ---
             setTimeBasedBackground(h);
 
-            // --- Greeting Logic ---
-            let greetingPart = "Good morning, students!"; // Default
+            // --- Greeting ---
+            let greetingPart = "Good morning, students!";
             if (h >= 12 && h < 17) {
                 greetingPart = "Good afternoon, students!";
             } else if (h >= 17) {
                 greetingPart = "Good evening, students!";
             }
 
-            // --- Date String ---
+            // --- Date ---
             const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
             const dateString = calgaryTime.toLocaleDateString('en-US', dateOptions);
 
-            // --- 12-Hour Logic for Display ---
-            let displayHour = h % 12;
-            displayHour = displayHour ? displayHour : 12; // Handle 0 as 12
-
-            // Update Text Elements
             document.getElementById('greeting-text').textContent = greetingPart;
             document.getElementById('date-text').textContent = `It's ${dateString}`;
 
+            // --- 12-Hour Logic ---
+            let displayHour = h % 12;
+            displayHour = displayHour ? displayHour : 12; 
+
             // --- Digit Logic ---
             
-            // 1. Hour String (No leading zero)
-            const hStr = displayHour.toString();
+            // HOURS
+            const hStr = String(displayHour);
             let d1Val, d2Val;
             
             if (displayHour < 10) {
                 d1Val = 'off';
-                d2Val = hStr;
+                // Accessing string by index [0] is safe in ES6 (Chrome 49+)
+                d2Val = hStr[0]; 
             } else {
                 d1Val = hStr[0];
                 d2Val = hStr[1];
             }
 
-            // 2. Minute String (Force 2 digits with padStart)
-            const mStr = m.toString().padStart(2, '0');
+            // MINUTES
+            // Replaces: m.toString().padStart(2, '0')
+            // Using manual helper for LG TV compatibility
+            const mStr = padZero(m);
+            
             const d3Val = mStr[0];
             const d4Val = mStr[1];
 
@@ -340,7 +337,7 @@
             setDigit('d2', d2Val);
             setDigit('d3', d3Val);
             setDigit('d4', d4Val);
-        }
+        };
 
         // Start immediately
         updateClock();
@@ -349,4 +346,3 @@
     </script>
 </body>
 </html>
-
