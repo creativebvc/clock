@@ -59,12 +59,12 @@
         .header-text span { display: block; }
         
         #greeting-text {
-            color: #ffffff; font-size: 3.2rem; font-weight: 700; 
+            color: #ffffff; font-size: 3.8rem; font-weight: 700; 
             text-shadow: 0 6px 30px rgba(0,0,0,0.2); margin-bottom: 10px;
         }
 
         #date-text {
-            color: #99daff; font-size: 2.2rem; font-weight: 600; margin-bottom: 25px; 
+            color: #99daff; font-size: 2.8rem; font-weight: 600; margin-bottom: 50px; 
         }
 
         /* Glass Clock Face */
@@ -159,7 +159,7 @@
         /* Logo Section */
         .logo-container {
             width: 100%; display: flex; justify-content: center; align-items: center;
-            margin-top: 60px;
+            margin-top: 120px;
         }
 
         .logo-container img {
@@ -233,22 +233,18 @@
         // Background Gradients by Time
         // ========================================
         const BACKGROUND_GRADIENTS = {
-            dawn: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)',      // 7am-8am
-            day: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)',       // 8am-6pm
-            night: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)'      // 6pm-7am
+            dawn: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)',      
+            day: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)',       
+            night: 'linear-gradient(135deg, #2e2baf 0%, #1b2d77 50%, #102a58 100%)'      
         };
 
         function setTimeBasedBackground(hour) {
             let gradient;
-            
             if (hour >= 7 && hour < 8) {
-                // Dawn: 7am-8am
                 gradient = BACKGROUND_GRADIENTS.dawn;
             } else if (hour >= 8 && hour < 18) {
-                // Day: 8am-6pm
                 gradient = BACKGROUND_GRADIENTS.day;
             } else {
-                // Night: 6pm-7am
                 gradient = BACKGROUND_GRADIENTS.night;
             }
             
@@ -273,7 +269,9 @@
         function setDigit(digitId, value) {
             const digitEl = document.getElementById(digitId);
             const segments = digitEl.querySelectorAll('.segment');
-            const map = digitMap[value];
+            
+            // Fallback to 'off' if value is invalid/undefined
+            const map = digitMap[value] || digitMap['off'];
 
             segments.forEach((seg, index) => {
                 if (map[index] === 1) {
@@ -285,29 +283,31 @@
         }
 
         function updateClock() {
-            // Get current time in Calgary
+            // Get raw time values directly (More reliable than string parsing)
             const now = new Date();
-            // Use 24-hour format logic for background/greetings calculation
-            const timeOptions24 = { timeZone: "America/Edmonton", hour12: false, hour: 'numeric', minute: 'numeric' };
-            const timeString24 = now.toLocaleTimeString('en-US', timeOptions24); 
             
-            let [hoursStr, minutesStr] = timeString24.split(':');
-            let h = parseInt(hoursStr, 10);
-            
-            // --- Update Background based on Calgary Hour ---
+            // Shift to Calgary Timezone if client is elsewhere, 
+            // otherwise local time is usually fine. 
+            // This method creates a "Calgary Date" object to pull hours/min from.
+            const calgaryTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Edmonton"}));
+
+            const h = calgaryTime.getHours();
+            const m = calgaryTime.getMinutes();
+
+            // --- Update Background ---
             setTimeBasedBackground(h);
 
             // --- Greeting Logic ---
-            let greetingPart = "Good morning, students!";
-            if (h >= 12 && h < 18) {
+            let greetingPart = "Good morning, students!"; // Default
+            if (h >= 12 && h < 17) {
                 greetingPart = "Good afternoon, students!";
-            } else if (h >= 18) {
+            } else if (h >= 17) {
                 greetingPart = "Good evening, students!";
             }
 
             // --- Date String ---
-            const dateOptions = { weekday: 'long', month: 'long', day: 'numeric', timeZone: "America/Edmonton" };
-            const dateString = now.toLocaleDateString('en-US', dateOptions);
+            const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
+            const dateString = calgaryTime.toLocaleDateString('en-US', dateOptions);
 
             // --- 12-Hour Logic for Display ---
             let displayHour = h % 12;
@@ -317,34 +317,36 @@
             document.getElementById('greeting-text').textContent = greetingPart;
             document.getElementById('date-text').textContent = `It's ${dateString}`;
 
-            // --- Digit Logic (Hide leading zero) ---
+            // --- Digit Logic ---
+            
+            // 1. Hour String (No leading zero)
+            const hStr = displayHour.toString();
             let d1Val, d2Val;
             
             if (displayHour < 10) {
-                d1Val = 'off'; 
-                d2Val = displayHour.toString();
+                d1Val = 'off';
+                d2Val = hStr;
             } else {
-                const hStr = displayHour.toString();
                 d1Val = hStr[0];
                 d2Val = hStr[1];
             }
 
-            // Ensure minutes have leading zero
-            // (Re-fetching minutes in 2-digit format to be safe)
-            const minOptions = { timeZone: "America/Edmonton", minute: '2-digit' };
-            const finalMin = now.toLocaleTimeString('en-US', { timeZone: "America/Edmonton", minute: '2-digit' }).slice(-2);
+            // 2. Minute String (Force 2 digits with padStart)
+            const mStr = m.toString().padStart(2, '0');
+            const d3Val = mStr[0];
+            const d4Val = mStr[1];
 
             setDigit('d1', d1Val);
             setDigit('d2', d2Val);
-            setDigit('d3', finalMin[0]);
-            setDigit('d4', finalMin[1]);
+            setDigit('d3', d3Val);
+            setDigit('d4', d4Val);
         }
 
+        // Start immediately
         updateClock();
         setInterval(updateClock, 1000);
 
     </script>
 </body>
 </html>
-
 
